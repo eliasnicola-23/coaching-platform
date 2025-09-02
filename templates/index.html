@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - Gestión de Tareas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% if logged_in %}
+    <!-- Dashboard cuando el usuario está logueado -->
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>TaskMaster</h2>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="user-profile">
+                <div class="user-avatar" style="background-color: {{ avatar_color }}">
+                    {{ user_initials }}
+                </div>
+                <div class="user-info">
+                    <h3>{{ username }}</h3>
+                    <p class="user-role">{{ user_role }}</p>
+                    <div class="user-level">
+                        <span class="level-badge">Nivel {{ user_points.level }}</span>
+                        <div class="points">{{ user_points.points }} puntos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Stats -->
+            <div class="user-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ user_stats.completed_tasks }}</span>
+                    <span class="stat-label">Completadas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ user_stats.active_tasks }}</span>
+                    <span class="stat-label">Activas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ user_stats.completion_rate }}%</span>
+                    <span class="stat-label">Tasa Éxito</span>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            {% if user_points.achievements %}
+            <div class="achievements">
+                <h4>Logros</h4>
+                <div class="achievement-list">
+                    {% for achievement in user_points.achievements %}
+                    <div class="achievement-item">
+                        <span class="achievement-icon">{{ achievement.icon }}</span>
+                        <span class="achievement-name">{{ achievement.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Projects -->
+            <div class="projects-section">
+                <div class="projects-header">
+                    <h4>Proyectos</h4>
+                    {% if can_manage_projects %}
+                    <button id="add-project-btn" class="add-project-btn">+</button>
+                    {% endif %}
+                </div>
+                <div class="projects-list">
+                    {% for project in projects %}
+                    <a href="{{ url_for('select_project', project_id=project.id) }}" 
+                       class="project-item {% if current_project and current_project.id == project.id %}active{% endif %}">
+                        {{ project.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="logout-btn">Cerrar Sesión</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            {% if current_project %}
+            <div class="project-header">
+                <h1>{{ current_project.name }}</h1>
+                {% if can_edit_tasks %}
+                <button id="add-task-btn" class="add-task-btn">+ Nueva Tarea</button>
+                {% endif %}
+            </div>
+
+            <!-- Kanban Board -->
+            <div class="kanban-board">
+                <div class="kanban-column" data-column="todo">
+                    <div class="column-header todo-header">
+                        <h3>Por hacer</h3>
+                        <span class="task-count">{{ tasks.todo|length }}</span>
+                    </div>
+                    <div class="tasks-container" id="todo-tasks">
+                        {% for task in tasks.todo %}
+                        <div class="task-card" data-task-id="{{ task.id }}" draggable="true">
+                            <div class="task-content">
+                                <p>{{ task.text }}</p>
+                                <div class="task-meta">
+                                    <span class="task-author">{{ task.created_by }}</span>
+                                    <span class="task-date">{{ task.created_at }}</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="comment-btn" data-task-id="{{ task.id }}">💬</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="kanban-column" data-column="inprogress">
+                    <div class="column-header inprogress-header">
+                        <h3>En curso</h3>
+                        <span class="task-count">{{ tasks.inprogress|length }}</span>
+                    </div>
+                    <div class="tasks-container" id="inprogress-tasks">
+                        {% for task in tasks.inprogress %}
+                        <div class="task-card" data-task-id="{{ task.id }}" draggable="true">
+                            <div class="task-content">
+                                <p>{{ task.text }}</p>
+                                <div class="task-meta">
+                                    <span class="task-author">{{ task.created_by }}</span>
+                                    <span class="task-date">{{ task.created_at }}</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="comment-btn" data-task-id="{{ task.id }}">💬</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="kanban-column" data-column="done">
+                    <div class="column-header done-header">
+                        <h3>Finalizado</h3>
+                        <span class="task-count">{{ tasks.done|length }}</span>
+                    </div>
+                    <div class="tasks-container" id="done-tasks">
+                        {% for task in tasks.done %}
+                        <div class="task-card completed" data-task-id="{{ task.id }}" draggable="true">
+                            <div class="task-content">
+                                <p>{{ task.text }}</p>
+                                <div class="task-meta">
+                                    <span class="task-author">{{ task.created_by }}</span>
+                                    <span class="task-date">{{ task.created_at }}</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="comment-btn" data-task-id="{{ task.id }}">💬</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="welcome-screen">
+                <h1>Bienvenido a TaskMaster</h1>
+                <p>Selecciona un proyecto o crea uno nuevo para comenzar a gestionar tus tareas.</p>
+                {% if can_manage_projects %}
+                <button id="add-project-btn" class="create-first-project-btn">Crear mi primer proyecto</button>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Project Modal -->
+    <div id="add-project-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Crear Nuevo Proyecto</h2>
+            <form id="add-project-form">
+                <input type="text" id="project-name" placeholder="Nombre del proyecto" required>
+                <button type="submit">Crear Proyecto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="add-task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Nueva Tarea</h2>
+            <form id="add-task-form">
+                <textarea id="task-text" placeholder="Describe tu tarea..." required></textarea>
+                <button type="submit">Agregar Tarea</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Comments Modal -->
+    <div id="comments-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Comentarios de la Tarea</h2>
+            <div id="task-details">
+                <div id="task-title"></div>
+                <div id="task-info"></div>
+            </div>
+            <div id="comments-container">
+                <!-- Comments will be loaded here -->
+            </div>
+            <div class="add-comment">
+                <form id="add-comment-form">
+                    <input type="hidden" id="comment-task-id">
+                    <textarea id="comment-text" placeholder="Agregar un comentario..." required></textarea>
+                    <button type="submit">Comentar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Login Screen -->
+    <div class="login-container">
+        <div class="login-box">
+            <h1>TaskMaster</h1>
+            <p>Gestiona tus tareas de manera eficiente</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="text" id="username" name="username" placeholder="Usuario" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" name="password" placeholder="Contraseña" required>
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+                <div id="login-error" class="error-message"></div>
+            </form>
+            <div class="demo-users">
+                <p>Usuarios de prueba:</p>
+                <p><strong>admin</strong> / 1234 (Administrador)</p>
+                <p><strong>maria</strong> / 1234 (Miembro)</p>
+                <p><strong>juan</strong> / 1234 (Invitado)</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
