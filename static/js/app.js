@@ -1,7 +1,6 @@
-// Main application JavaScript
+// Enhanced TaskMaster JavaScript Application
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize application
     initializeApp();
 });
 
@@ -12,22 +11,29 @@ function initializeApp() {
         loginForm.addEventListener('submit', handleLogin);
     }
 
-    // Modal handling
-    initializeModals();
-
-    // Drag and drop functionality
-    if (document.querySelector('.kanban-board')) {
-        initializeDragAndDrop();
+    // Only initialize dashboard features if user is logged in
+    if (document.querySelector('.dashboard')) {
+        initializeDashboard();
     }
+}
 
-    // Task management
+function initializeDashboard() {
+    // Initialize all dashboard features
+    initializeModals();
+    initializeDragAndDrop();
     initializeTaskManagement();
-
-    // Project management
     initializeProjectManagement();
-
-    // Comments functionality
     initializeComments();
+    initializeAvatarUpload();
+    initializeSettings();
+    initializeNotifications();
+    initializeThemeToggle();
+    initializeAnalytics();
+    initializeRankings();
+    initializeProjectSettings();
+    initializeReactions();
+    initializeExport();
+    initializeSecurity();
 }
 
 // Login handling
@@ -38,7 +44,6 @@ function handleLogin(e) {
     const loginButton = e.target.querySelector('button[type="submit"]');
     const errorDiv = document.getElementById('login-error');
     
-    // Show loading state
     loginButton.textContent = 'Iniciando sesión...';
     loginButton.disabled = true;
     errorDiv.textContent = '';
@@ -70,7 +75,6 @@ function initializeModals() {
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.close');
     
-    // Close button handlers
     closeButtons.forEach(button => {
         button.addEventListener('click', function() {
             const modal = this.closest('.modal');
@@ -78,7 +82,6 @@ function initializeModals() {
         });
     });
     
-    // Click outside to close
     modals.forEach(modal => {
         modal.addEventListener('click', function(e) {
             if (e.target === this) {
@@ -87,12 +90,14 @@ function initializeModals() {
         });
     });
     
-    // Escape key to close
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const openModal = document.querySelector('.modal[style*="display: block"]');
+            const openPanel = document.querySelector('.side-panel.active');
             if (openModal) {
                 closeModal(openModal);
+            } else if (openPanel) {
+                closePanel(openPanel);
             }
         }
     });
@@ -102,7 +107,6 @@ function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'block';
-        // Focus on first input if exists
         const firstInput = modal.querySelector('input, textarea');
         if (firstInput) {
             setTimeout(() => firstInput.focus(), 100);
@@ -112,23 +116,354 @@ function openModal(modalId) {
 
 function closeModal(modal) {
     modal.style.display = 'none';
-    // Reset form if exists
     const form = modal.querySelector('form');
     if (form) {
         form.reset();
     }
 }
 
+function openPanel(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        panel.classList.add('active');
+    }
+}
+
+function closePanel(panel) {
+    panel.classList.remove('active');
+}
+
+// Avatar Upload
+function initializeAvatarUpload() {
+    const uploadBtn = document.getElementById('upload-avatar-btn');
+    const uploadModal = document.getElementById('upload-avatar-modal');
+    const uploadForm = document.getElementById('upload-avatar-form');
+    const fileInput = document.getElementById('avatar-file');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const previewImage = document.getElementById('preview-image');
+    const removeBtn = document.getElementById('remove-avatar-btn');
+
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => openModal('upload-avatar-modal'));
+    }
+
+    if (uploadPlaceholder) {
+        uploadPlaceholder.addEventListener('click', () => fileInput.click());
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    uploadPlaceholder.style.display = 'none';
+                    avatarPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            submitBtn.textContent = 'Subiendo...';
+            submitBtn.disabled = true;
+            
+            fetch('/upload_avatar', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update avatar display
+                    const avatarDisplay = document.getElementById('user-avatar-display');
+                    if (avatarDisplay) {
+                        avatarDisplay.innerHTML = `<img src="/avatars/${data.filename}" alt="Avatar" class="user-avatar-img">`;
+                    }
+                    closeModal(uploadModal);
+                    showNotification('Avatar actualizado exitosamente', 'success');
+                } else {
+                    showNotification(data.message || 'Error al subir avatar', 'error');
+                }
+                submitBtn.textContent = 'Guardar Avatar';
+                submitBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+                submitBtn.textContent = 'Guardar Avatar';
+                submitBtn.disabled = false;
+            });
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            // Reset to initials
+            uploadPlaceholder.style.display = 'block';
+            avatarPreview.style.display = 'none';
+            fileInput.value = '';
+        });
+    }
+}
+
+// Settings Management
+function initializeSettings() {
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const saveBtn = document.getElementById('save-settings-btn');
+
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => openModal('settings-modal'));
+    }
+
+    // Tab switching
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // Update active tab
+            tabBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabId}-settings`).classList.add('active');
+        });
+    });
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            saveAllSettings();
+        });
+    }
+}
+
+function saveAllSettings() {
+    const formData = new FormData();
+    
+    // Collect all form data from active settings
+    const forms = document.querySelectorAll('#settings-modal form');
+    forms.forEach(form => {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox') {
+                formData.append(input.name, input.checked ? 'on' : 'off');
+            } else if (input.type === 'radio' && input.checked) {
+                formData.append(input.name, input.value);
+            } else if (input.type !== 'radio') {
+                formData.append(input.name, input.value);
+            }
+        });
+    });
+
+    fetch('/update_settings', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Configuraciones guardadas', 'success');
+            closeModal(document.getElementById('settings-modal'));
+            // Reload to apply theme changes
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification(data.message || 'Error al guardar', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+    });
+}
+
+// Theme Toggle
+function initializeThemeToggle() {
+    const themeBtn = document.getElementById('theme-toggle');
+    
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            this.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Save theme preference
+            const formData = new FormData();
+            formData.append('theme', newTheme);
+            
+            fetch('/update_settings', {
+                method: 'POST',
+                body: formData
+            });
+        });
+    }
+}
+
+// Notifications System
+function initializeNotifications() {
+    const notificationBtn = document.getElementById('notifications-btn');
+    const notificationPanel = document.getElementById('notifications-panel');
+    const closePanel = document.querySelector('#notifications-panel .close-panel');
+
+    if (notificationBtn) {
+        notificationBtn.addEventListener('click', () => {
+            openPanel('notifications-panel');
+            loadNotifications();
+        });
+    }
+
+    if (closePanel) {
+        closePanel.addEventListener('click', () => {
+            closePanel(notificationPanel);
+        });
+    }
+
+    // Mark notifications as read
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('mark-read-btn')) {
+            const notificationId = e.target.dataset.id;
+            markNotificationRead(notificationId);
+        }
+    });
+}
+
+function loadNotifications() {
+    fetch('/get_notifications')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayNotifications(data.notifications);
+        }
+    })
+    .catch(error => console.error('Error loading notifications:', error));
+}
+
+function markNotificationRead(notificationId) {
+    const formData = new FormData();
+    formData.append('notification_id', notificationId);
+    
+    fetch('/mark_notification_read', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+            if (notificationElement) {
+                notificationElement.classList.remove('unread');
+                const markReadBtn = notificationElement.querySelector('.mark-read-btn');
+                if (markReadBtn) {
+                    markReadBtn.remove();
+                }
+            }
+            updateNotificationBadge();
+        }
+    });
+}
+
+function displayNotifications(notifications) {
+    const container = document.getElementById('notifications-list');
+    
+    if (notifications.length === 0) {
+        container.innerHTML = '<div class="no-notifications"><p>No hay notificaciones</p></div>';
+        return;
+    }
+    
+    container.innerHTML = notifications.map(notification => `
+        <div class="notification-item ${!notification.read ? 'unread' : ''}" data-id="${notification.id}">
+            <div class="notification-icon ${notification.type}">
+                ${getNotificationIcon(notification.type)}
+            </div>
+            <div class="notification-content">
+                <p>${escapeHtml(notification.message)}</p>
+                <span class="notification-time">${notification.timestamp}</span>
+            </div>
+            ${!notification.read ? `<button class="mark-read-btn" data-id="${notification.id}">✓</button>` : ''}
+        </div>
+    `).join('');
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'success': '✅',
+        'warning': '⚠️',
+        'error': '❌',
+        'info': 'ℹ️'
+    };
+    return icons[type] || icons.info;
+}
+
+function updateNotificationBadge() {
+    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+    const badge = document.querySelector('.notification-badge');
+    
+    if (unreadCount > 0) {
+        if (badge) {
+            badge.textContent = unreadCount;
+        } else {
+            const notificationBtn = document.getElementById('notifications-btn');
+            const newBadge = document.createElement('span');
+            newBadge.className = 'notification-badge';
+            newBadge.textContent = unreadCount;
+            notificationBtn.appendChild(newBadge);
+        }
+    } else if (badge) {
+        badge.remove();
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create temporary notification
+    const notification = document.createElement('div');
+    notification.className = `notification-toast ${type}`;
+    notification.innerHTML = `
+        <div class="notification-icon">${getNotificationIcon(type)}</div>
+        <div class="notification-message">${escapeHtml(message)}</div>
+        <button class="notification-close">×</button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+    
+    // Manual close
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    });
+}
+
 // Project management
 function initializeProjectManagement() {
-    // Add project button handlers
     const addProjectBtns = document.querySelectorAll('#add-project-btn, .create-first-project-btn');
+    const addProjectForm = document.getElementById('add-project-form');
+
     addProjectBtns.forEach(btn => {
         btn.addEventListener('click', () => openModal('add-project-modal'));
     });
 
-    // Add project form
-    const addProjectForm = document.getElementById('add-project-form');
     if (addProjectForm) {
         addProjectForm.addEventListener('submit', handleAddProject);
     }
@@ -156,29 +491,65 @@ function handleAddProject(e) {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.message || 'Error al crear el proyecto');
+            showNotification(data.message || 'Error al crear el proyecto', 'error');
             submitBtn.textContent = 'Crear Proyecto';
             submitBtn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error de conexión. Inténtalo de nuevo.');
+        showNotification('Error de conexión', 'error');
         submitBtn.textContent = 'Crear Proyecto';
         submitBtn.disabled = false;
     });
 }
 
+// Project Settings
+function initializeProjectSettings() {
+    const projectSettingsBtn = document.getElementById('project-settings-btn');
+    const projectSettingsForm = document.getElementById('project-settings-form');
+
+    if (projectSettingsBtn) {
+        projectSettingsBtn.addEventListener('click', () => openModal('project-settings-modal'));
+    }
+
+    if (projectSettingsForm) {
+        projectSettingsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('/update_project_settings', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Configuraciones del proyecto actualizadas', 'success');
+                    closeModal(document.getElementById('project-settings-modal'));
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification(data.message || 'Error al actualizar', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+            });
+        });
+    }
+}
+
 // Task management
 function initializeTaskManagement() {
-    // Add task button
     const addTaskBtn = document.getElementById('add-task-btn');
+    const addTaskForm = document.getElementById('add-task-form');
+
     if (addTaskBtn) {
         addTaskBtn.addEventListener('click', () => openModal('add-task-modal'));
     }
 
-    // Add task form
-    const addTaskForm = document.getElementById('add-task-form');
     if (addTaskForm) {
         addTaskForm.addEventListener('submit', handleAddTask);
     }
@@ -208,15 +579,16 @@ function handleAddTask(e) {
             addTaskToBoard(data.task);
             closeModal(document.getElementById('add-task-modal'));
             updateTaskCounts();
+            showNotification('Tarea agregada exitosamente', 'success');
         } else {
-            alert(data.message || 'Error al crear la tarea');
+            showNotification(data.message || 'Error al crear la tarea', 'error');
         }
         submitBtn.textContent = 'Agregar Tarea';
         submitBtn.disabled = false;
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error de conexión. Inténtalo de nuevo.');
+        showNotification('Error de conexión', 'error');
         submitBtn.textContent = 'Agregar Tarea';
         submitBtn.disabled = false;
     });
@@ -227,7 +599,6 @@ function addTaskToBoard(task) {
     const taskElement = createTaskElement(task);
     todoContainer.appendChild(taskElement);
     
-    // Add success animation
     taskElement.classList.add('success-flash');
     setTimeout(() => taskElement.classList.remove('success-flash'), 600);
 }
@@ -247,11 +618,15 @@ function createTaskElement(task) {
             </div>
         </div>
         <div class="task-actions">
-            <button class="comment-btn" data-task-id="${task.id}">💬</button>
+            <button class="comment-btn" data-task-id="${task.id}" title="Comentarios">💬</button>
+            <div class="reaction-buttons">
+                <button class="reaction-btn" data-task-id="${task.id}" data-emoji="👍" title="Me gusta">👍</button>
+                <button class="reaction-btn" data-task-id="${task.id}" data-emoji="🟢" title="Aprobado">🟢</button>
+                <button class="reaction-btn" data-task-id="${task.id}" data-emoji="🔴" title="Problema">🔴</button>
+            </div>
         </div>
     `;
     
-    // Add event listeners
     addDragEventListeners(taskDiv);
     
     // Add comment button listener
@@ -261,7 +636,50 @@ function createTaskElement(task) {
         openTaskComments(task.id);
     });
     
+    // Add reaction button listeners
+    const reactionBtns = taskDiv.querySelectorAll('.reaction-btn');
+    reactionBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addTaskReaction(btn.dataset.taskId, btn.dataset.emoji);
+        });
+    });
+    
     return taskDiv;
+}
+
+// Reactions
+function initializeReactions() {
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('reaction-btn')) {
+            const taskId = e.target.dataset.taskId;
+            const emoji = e.target.dataset.emoji;
+            addTaskReaction(taskId, emoji);
+        }
+    });
+}
+
+function addTaskReaction(taskId, emoji) {
+    const formData = new FormData();
+    formData.append('task_id', taskId);
+    formData.append('emoji', emoji);
+    
+    fetch('/add_task_reaction', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Reacción ${emoji} agregada`, 'success');
+        } else {
+            showNotification('Error al agregar reacción', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+    });
 }
 
 // Drag and drop functionality
@@ -269,10 +687,8 @@ function initializeDragAndDrop() {
     const taskCards = document.querySelectorAll('.task-card');
     const containers = document.querySelectorAll('.tasks-container');
     
-    // Add drag events to existing tasks
     taskCards.forEach(addDragEventListeners);
     
-    // Add drop zones
     containers.forEach(container => {
         container.addEventListener('dragover', handleDragOver);
         container.addEventListener('drop', handleDrop);
@@ -289,7 +705,6 @@ function addDragEventListeners(taskCard) {
 function handleDragStart(e) {
     this.classList.add('dragging');
     e.dataTransfer.setData('text/plain', this.dataset.taskId);
-    e.dataTransfer.setData('text/html', this.outerHTML);
     e.dataTransfer.effectAllowed = 'move';
 }
 
@@ -327,17 +742,14 @@ function handleDrop(e) {
     
     if (fromColumn === toColumn) return;
     
-    // Move task visually first for immediate feedback
     this.appendChild(taskElement);
     
-    // Update task styling if moved to done
     if (toColumn === 'done') {
         taskElement.classList.add('completed');
     } else {
         taskElement.classList.remove('completed');
     }
     
-    // Send request to backend
     moveTaskOnServer(taskId, fromColumn, toColumn);
     updateTaskCounts();
 }
@@ -354,15 +766,16 @@ function moveTaskOnServer(taskId, fromColumn, toColumn) {
     })
     .then(response => response.json())
     .then(data => {
-        if (!data.success) {
-            // Revert the move if it failed
-            alert(data.message || 'Error al mover la tarea');
+        if (data.success) {
+            showNotification('Tarea movida exitosamente', 'success');
+        } else {
+            showNotification(data.message || 'Error al mover la tarea', 'error');
             window.location.reload();
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error de conexión. La página se recargará.');
+        showNotification('Error de conexión', 'error');
         window.location.reload();
     });
 }
@@ -382,8 +795,9 @@ function updateTaskCounts() {
 
 // Comments functionality
 function initializeComments() {
-    // Add comment button handlers for existing tasks
     const commentBtns = document.querySelectorAll('.comment-btn');
+    const addCommentForm = document.getElementById('add-comment-form');
+
     commentBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -391,15 +805,12 @@ function initializeComments() {
         });
     });
 
-    // Add comment form
-    const addCommentForm = document.getElementById('add-comment-form');
     if (addCommentForm) {
         addCommentForm.addEventListener('submit', handleAddComment);
     }
 }
 
 function openTaskComments(taskId) {
-    // Get task details
     fetch(`/get_task_details/${taskId}`)
     .then(response => response.json())
     .then(data => {
@@ -407,12 +818,12 @@ function openTaskComments(taskId) {
             displayTaskComments(data);
             openModal('comments-modal');
         } else {
-            alert(data.message || 'Error al cargar los comentarios');
+            showNotification(data.message || 'Error al cargar los comentarios', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error de conexión.');
+        showNotification('Error de conexión', 'error');
     });
 }
 
@@ -420,7 +831,6 @@ function displayTaskComments(data) {
     const task = data.task;
     const comments = data.comments;
     
-    // Update task details
     document.getElementById('task-title').textContent = task.text;
     document.getElementById('task-info').innerHTML = `
         <strong>Creado por:</strong> ${escapeHtml(task.created_by)} | 
@@ -428,19 +838,36 @@ function displayTaskComments(data) {
         <strong>Fecha:</strong> ${escapeHtml(task.created_at)}
     `;
     
-    // Update hidden field
     document.getElementById('comment-task-id').value = task.id;
     
-    // Display comments
     const commentsContainer = document.getElementById('comments-container');
     if (comments.length === 0) {
-        commentsContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay comentarios aún. ¡Sé el primero en comentar!</p>';
+        commentsContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No hay comentarios aún. ¡Sé el primero en comentar!</p>';
     } else {
         commentsContainer.innerHTML = comments.map(comment => createCommentElement(comment)).join('');
     }
 }
 
 function createCommentElement(comment) {
+    const isReaction = comment.is_reaction || false;
+    
+    if (isReaction) {
+        return `
+            <div class="comment reaction-comment">
+                <div class="comment-header">
+                    <div class="comment-avatar" style="background-color: ${comment.author_color}">
+                        ${escapeHtml(comment.author_initials)}
+                    </div>
+                    <div class="comment-meta">
+                        <div class="comment-author">${escapeHtml(comment.author)}</div>
+                        <div class="comment-timestamp">${escapeHtml(comment.timestamp)}</div>
+                    </div>
+                    <div class="reaction-large">${comment.emoji}</div>
+                </div>
+            </div>
+        `;
+    }
+    
     return `
         <div class="comment">
             <div class="comment-header">
@@ -480,7 +907,6 @@ function handleAddComment(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Add comment to the display
             const commentsContainer = document.getElementById('comments-container');
             const noCommentsMsg = commentsContainer.querySelector('p[style*="text-align: center"]');
             if (noCommentsMsg) {
@@ -490,10 +916,10 @@ function handleAddComment(e) {
             const commentElement = createCommentElement(data.comment);
             commentsContainer.insertAdjacentHTML('beforeend', commentElement);
             
-            // Clear form
             document.getElementById('comment-text').value = '';
+            showNotification('Comentario agregado', 'success');
         } else {
-            alert(data.message || 'Error al agregar el comentario');
+            showNotification(data.message || 'Error al agregar el comentario', 'error');
         }
         
         submitBtn.textContent = 'Comentar';
@@ -501,10 +927,238 @@ function handleAddComment(e) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error de conexión. Inténtalo de nuevo.');
+        showNotification('Error de conexión', 'error');
         submitBtn.textContent = 'Comentar';
         submitBtn.disabled = false;
     });
+}
+
+// Analytics
+function initializeAnalytics() {
+    const analyticsBtn = document.getElementById('project-analytics-btn');
+    const tabBtns = document.querySelectorAll('.analytics-tabs .tab-btn');
+    const periodBtns = document.querySelectorAll('.period-btn');
+
+    if (analyticsBtn) {
+        analyticsBtn.addEventListener('click', () => {
+            openModal('analytics-modal');
+            initializeAnalyticsCharts();
+        });
+    }
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            tabBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            document.querySelectorAll('.analytics-content .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabId}-analytics`).classList.add('active');
+            
+            if (tabId === 'trends') {
+                initializeTrendsChart('weekly');
+            }
+        });
+    });
+
+    periodBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const period = this.dataset.period;
+            
+            periodBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            initializeTrendsChart(period);
+        });
+    });
+}
+
+function initializeAnalyticsCharts() {
+    // Initialize task distribution chart
+    const distributionCtx = document.getElementById('taskDistributionChart');
+    if (distributionCtx) {
+        const todoCount = document.getElementById('todo-tasks').children.length;
+        const inprogressCount = document.getElementById('inprogress-tasks').children.length;
+        const doneCount = document.getElementById('done-tasks').children.length;
+        
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Por hacer', 'En curso', 'Finalizado'],
+                datasets: [{
+                    data: [todoCount, inprogressCount, doneCount],
+                    backgroundColor: ['#ff6b6b', '#feca57', '#48cae4'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function initializeTrendsChart(period) {
+    fetch(`/get_user_stats/${period}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const trendsCtx = document.getElementById('trendsChart');
+            if (trendsCtx) {
+                new Chart(trendsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.stats.labels,
+                        datasets: [{
+                            label: 'Completadas',
+                            data: data.stats.completed,
+                            borderColor: '#48cae4',
+                            backgroundColor: 'rgba(72, 202, 228, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Creadas',
+                            data: data.stats.created,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    })
+    .catch(error => console.error('Error loading trends:', error));
+}
+
+// Rankings
+function initializeRankings() {
+    const rankingsBtn = document.getElementById('view-rankings-btn');
+    
+    if (rankingsBtn) {
+        rankingsBtn.addEventListener('click', () => {
+            openModal('rankings-modal');
+            loadRankings();
+        });
+    }
+}
+
+function loadRankings() {
+    fetch('/get_rankings')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayRankings(data.rankings);
+        }
+    })
+    .catch(error => console.error('Error loading rankings:', error));
+}
+
+function displayRankings(rankings) {
+    const container = document.getElementById('rankings-list');
+    
+    container.innerHTML = rankings.map(ranking => `
+        <div class="ranking-item ${ranking.username === getCurrentUsername() ? 'current-user' : ''}">
+            <div class="ranking-position">${ranking.rank}</div>
+            <div class="ranking-username">${escapeHtml(ranking.username)}</div>
+            <div class="ranking-score">${ranking.monthly_score}</div>
+            <div class="ranking-weekly">${ranking.weekly_completed}</div>
+        </div>
+    `).join('');
+}
+
+function getCurrentUsername() {
+    // Get current username from the page
+    const userInfo = document.querySelector('.user-info h3');
+    return userInfo ? userInfo.textContent : '';
+}
+
+// Export functionality
+function initializeExport() {
+    const exportBtn = document.getElementById('export-project-btn');
+    
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            this.textContent = 'Exportando...';
+            this.disabled = true;
+            
+            fetch('/export_project')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Proyecto exportado exitosamente', 'success');
+                    // Here you could trigger a download or show export data
+                    console.log('Export data:', data.data);
+                } else {
+                    showNotification(data.message || 'Error al exportar', 'error');
+                }
+                this.textContent = '📊';
+                this.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+                this.textContent = '📊';
+                this.disabled = false;
+            });
+        });
+    }
+}
+
+// Security
+function initializeSecurity() {
+    const changePasswordForm = document.getElementById('change-password-form');
+    
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            submitBtn.textContent = 'Cambiando...';
+            submitBtn.disabled = true;
+            
+            fetch('/change_password', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Contraseña cambiada exitosamente', 'success');
+                    this.reset();
+                } else {
+                    showNotification(data.message || 'Error al cambiar contraseña', 'error');
+                }
+                submitBtn.textContent = 'Cambiar Contraseña';
+                submitBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+                submitBtn.textContent = 'Cambiar Contraseña';
+                submitBtn.disabled = false;
+            });
+        });
+    }
 }
 
 // Utility functions
@@ -523,16 +1177,75 @@ function getColumnDisplayName(column) {
     return names[column] || column;
 }
 
-// Add some global error handling
+// Global error handling
 window.addEventListener('error', function(e) {
     console.error('JavaScript Error:', e.error);
 });
 
-// Add performance optimization for animations
-function requestIdleCallback(callback) {
-    if (window.requestIdleCallback) {
-        return window.requestIdleCallback(callback);
-    } else {
-        return setTimeout(callback, 1);
+// CSS for notification toasts
+const toastStyles = `
+<style>
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+    max-width: 400px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification-toast.success {
+    border-left-color: #27ae60;
+}
+
+.notification-toast.error {
+    border-left-color: #e74c3c;
+}
+
+.notification-toast.warning {
+    border-left-color: #f39c12;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: auto;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
 }
+
+.reaction-comment {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-left-color: var(--primary-color);
+}
+
+.reaction-large {
+    font-size: 24px;
+    margin-left: auto;
+}
+</style>
+`;
+
+// Add toast styles to document
+document.head.insertAdjacentHTML('beforeend', toastStyles);
