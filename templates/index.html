@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="{{ user_settings.theme if user_settings else 'light' }}">
+<html lang="es" data-theme="{{ user_settings.theme if user_settings else 'dark' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -107,13 +107,43 @@
                 <div class="projects-list">
                     {% for project in projects %}
                     <a href="{{ url_for('select_project', project_id=project.id) }}" 
-                       class="project-item {% if current_project and current_project.id == project.id %}active{% endif %}">
+                       class="project-item {% if current_project and current_project.id == project.id %}active{% endif %}"
+                       style="{% if current_project and current_project.id == project.id %}border-left: 4px solid {{ project.color if project.color else 'var(--primary-color)' }};{% endif %}">
+                        <div class="project-color-dot" style="background-color: {{ project.color if project.color else 'var(--primary-color)' }}"></div>
                         {{ project.name }}
                         {% if current_project and current_project.id == project.id %}
                         <span class="project-indicator">📌</span>
                         {% endif %}
                     </a>
                     {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quick Notes -->
+            <div class="quick-notes-section">
+                <div class="notes-header">
+                    <h4>Notas Rápidas</h4>
+                    <button id="add-note-btn" class="add-note-btn" title="Nueva nota">📝</button>
+                </div>
+                <div class="notes-list" id="notes-list">
+                    <!-- Notes will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Mini Chat -->
+            <div class="mini-chat-section">
+                <div class="chat-header">
+                    <h4>Chat del Proyecto</h4>
+                    <button id="toggle-chat-btn" class="toggle-chat-btn" title="Mostrar/Ocultar">💬</button>
+                </div>
+                <div class="chat-container" id="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Chat messages will be loaded here -->
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." maxlength="200">
+                        <button id="send-chat-btn" title="Enviar">📤</button>
+                    </div>
                 </div>
             </div>
 
@@ -140,17 +170,59 @@
         <!-- Main Content -->
         <div class="main-content">
             {% if current_project %}
-            <div class="project-header">
-                <div class="project-title">
-                    <h1>{{ current_project.name }}</h1>
-                    <div class="project-controls-main">
-                        <button id="export-project-btn" class="export-btn" title="Exportar proyecto">📊</button>
-                        <button id="project-analytics-btn" class="analytics-btn" title="Estadísticas">📈</button>
+            <!-- Top Control Bar -->
+            <div class="control-bar">
+                <div class="control-section">
+                    <div class="search-container">
+                        <input type="text" id="task-search" placeholder="🔍 Buscar tareas, usuarios o estados..." class="search-input">
+                        <div class="search-filters">
+                            <button class="filter-btn" data-filter="all">Todas</button>
+                            <button class="filter-btn" data-filter="assigned">Asignadas a mí</button>
+                            <button class="filter-btn" data-filter="urgent">Urgentes</button>
+                            <button class="filter-btn" data-filter="today">Hoy</button>
+                        </div>
                     </div>
                 </div>
-                {% if can_edit_tasks %}
-                <button id="add-task-btn" class="add-task-btn">+ Nueva Tarea</button>
-                {% endif %}
+                
+                <div class="view-controls">
+                    <div class="view-switcher">
+                        <button class="view-btn active" data-view="kanban" title="Vista Kanban">📋</button>
+                        <button class="view-btn" data-view="calendar" title="Vista Calendario">📅</button>
+                        <button class="view-btn" data-view="dashboard" title="Dashboard">📊</button>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        {% if can_edit_tasks %}
+                        <button id="add-task-btn" class="action-btn primary">+ Nueva Tarea</button>
+                        {% endif %}
+                        <button id="export-image-btn" class="action-btn" title="Exportar como imagen">📸</button>
+                        <button id="project-analytics-btn" class="action-btn" title="Estadísticas">📈</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-header">
+                <div class="project-title">
+                    <div class="project-color-indicator" style="background-color: {{ current_project.color if current_project.color else 'var(--primary-color)' }}"></div>
+                    <h1>{{ current_project.name }}</h1>
+                    <div class="project-theme-badge" style="background: {{ current_project.color if current_project.color else 'var(--primary-color)' }}">
+                        {{ current_project.theme_name if current_project.theme_name else 'Tema por defecto' }}
+                    </div>
+                </div>
+                <div class="quick-stats">
+                    <div class="stat">
+                        <span class="stat-number">{{ tasks.todo|length + tasks.inprogress|length + tasks.done|length }}</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">{{ tasks.done|length }}</span>
+                        <span class="stat-label">Completadas</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">{{ (tasks.done|length / (tasks.todo|length + tasks.inprogress|length + tasks.done|length) * 100)|round if (tasks.todo|length + tasks.inprogress|length + tasks.done|length) > 0 else 0 }}%</span>
+                        <span class="stat-label">Progreso</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Project Progress Bar -->
@@ -167,41 +239,195 @@
                 </div>
             </div>
 
-            <!-- Kanban Board -->
-            <div class="kanban-board">
-                {% set column_names = {'todo': 'Por hacer', 'inprogress': 'En curso', 'done': 'Finalizado'} %}
-                {% set visible_columns = project_settings.columns if project_settings else ['todo', 'inprogress', 'done'] %}
-                
-                {% for column in visible_columns %}
-                <div class="kanban-column" data-column="{{ column }}">
-                    <div class="column-header {{ column }}-header">
-                        <h3>{{ column_names[column] }}</h3>
-                        <span class="task-count">{{ tasks[column]|length }}</span>
-                    </div>
-                    <div class="tasks-container" id="{{ column }}-tasks">
-                        {% for task in tasks[column] %}
-                        <div class="task-card {% if column == 'done' %}completed{% endif %}" 
-                             data-task-id="{{ task.id }}" draggable="true">
-                            <div class="task-content">
-                                <p>{{ task.text }}</p>
-                                <div class="task-meta">
-                                    <span class="task-author">{{ task.created_by }}</span>
-                                    <span class="task-date">{{ task.created_at }}</span>
-                                </div>
+            <!-- Views Container -->
+            <div class="views-container">
+                <!-- Kanban View -->
+                <div class="view-content kanban-view active" data-view="kanban">
+                    <div class="kanban-board" id="kanban-board">
+                        {% set column_names = {'todo': 'Por hacer', 'inprogress': 'En curso', 'done': 'Finalizado'} %}
+                        {% set visible_columns = project_settings.columns if project_settings else ['todo', 'inprogress', 'done'] %}
+                        
+                        {% for column in visible_columns %}
+                        <div class="kanban-column" data-column="{{ column }}">
+                            <div class="column-header {{ column }}-header">
+                                <h3>{{ column_names[column] }}</h3>
+                                <span class="task-count">{{ tasks[column]|length }}</span>
                             </div>
-                            <div class="task-actions">
-                                <button class="comment-btn" data-task-id="{{ task.id }}" title="Comentarios">💬</button>
-                                <div class="reaction-buttons">
-                                    <button class="reaction-btn" data-task-id="{{ task.id }}" data-emoji="👍" title="Me gusta">👍</button>
-                                    <button class="reaction-btn" data-task-id="{{ task.id }}" data-emoji="🟢" title="Aprobado">🟢</button>
-                                    <button class="reaction-btn" data-task-id="{{ task.id }}" data-emoji="🔴" title="Problema">🔴</button>
+                            <div class="tasks-container" id="{{ column }}-tasks">
+                                {% for task in tasks[column] %}
+                                <div class="task-card {% if column == 'done' %}completed{% endif %}" 
+                                     data-task-id="{{ task.id }}" 
+                                     data-assigned="{{ task.assigned_to if task.assigned_to else '' }}"
+                                     data-tags="{{ task.tags|join(',') if task.tags else '' }}"
+                                     data-due-date="{{ task.due_date if task.due_date else '' }}"
+                                     draggable="true">
+                                    <div class="task-content">
+                                        <div class="task-header">
+                                            <div class="task-tags">
+                                                {% if task.tags %}
+                                                    {% for tag in task.tags %}
+                                                    <span class="task-tag {{ tag.type if tag.type else 'default' }}">{{ tag.name }}</span>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                            {% if task.due_date %}
+                                            <div class="task-due-date {% if task.is_overdue %}overdue{% elif task.is_due_today %}due-today{% endif %}">
+                                                📅 {{ task.due_date }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <p>{{ task.text }}</p>
+                                        <div class="task-meta">
+                                            <div class="task-author-section">
+                                                <span class="task-author">{{ task.created_by }}</span>
+                                                {% if task.assigned_to and task.assigned_to != task.created_by %}
+                                                <span class="task-assigned">→ {{ task.assigned_to }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <span class="task-date">{{ task.created_at }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="task-actions">
+                                        <button class="comment-btn" data-task-id="{{ task.id }}" title="Comentarios">💬</button>
+                                        <div class="reaction-buttons">
+                                            <button class="reaction-btn" data-task-id="{{ task.id }}" data-emoji="👍" title="Me gusta">👍</button>
+                                            <button class="reaction-btn" data-task-id="{{ task.id }}" data-emoji="🟢" title="Aprobado">🟢</button>
+                                            <button class="reaction-btn" data-task-id="{{ task.id }}" data-emoji="🔴" title="Problema">🔴</button>
+                                        </div>
+                                    </div>
                                 </div>
+                                {% endfor %}
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
-                {% endfor %}
+
+                <!-- Calendar View -->
+                <div class="view-content calendar-view" data-view="calendar">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button id="prev-month" class="calendar-nav">‹</button>
+                            <h3 id="current-month">Octubre 2024</h3>
+                            <button id="next-month" class="calendar-nav">›</button>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid">
+                            <!-- Calendar will be generated by JavaScript -->
+                        </div>
+                        <div class="calendar-legend">
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background: var(--todo-color)"></span>
+                                <span>Por hacer</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background: var(--inprogress-color)"></span>
+                                <span>En curso</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background: var(--done-color)"></span>
+                                <span>Finalizado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard View -->
+                <div class="view-content dashboard-view" data-view="dashboard">
+                    <div class="dashboard-container">
+                        <div class="dashboard-widgets">
+                            <!-- Today's Tasks -->
+                            <div class="widget today-tasks">
+                                <h3>📅 Tareas de Hoy</h3>
+                                <div class="widget-content" id="today-tasks-list">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+
+                            <!-- Progress Overview -->
+                            <div class="widget progress-overview">
+                                <h3>📊 Progreso Semanal</h3>
+                                <div class="widget-content">
+                                    <canvas id="weeklyProgressChart" width="300" height="200"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Active Projects -->
+                            <div class="widget active-projects">
+                                <h3>🚀 Proyectos Activos</h3>
+                                <div class="widget-content">
+                                    {% for project in projects %}
+                                    <div class="project-summary">
+                                        <div class="project-info">
+                                            <div class="project-color-dot" style="background: {{ project.color if project.color else 'var(--primary-color)' }}"></div>
+                                            <span class="project-name">{{ project.name }}</span>
+                                        </div>
+                                        <div class="project-stats">
+                                            {% set project_tasks = tasks if current_project and current_project.id == project.id else {} %}
+                                            {% if project_tasks %}
+                                            <span class="stat">{{ project_tasks.done|length }}/{{ project_tasks.todo|length + project_tasks.inprogress|length + project_tasks.done|length }}</span>
+                                            {% else %}
+                                            <span class="stat">0/0</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Team Performance -->
+                            <div class="widget team-performance">
+                                <h3>👥 Rendimiento del Equipo</h3>
+                                <div class="widget-content">
+                                    <div class="team-stats">
+                                        <div class="team-member">
+                                            <div class="member-info">
+                                                <div class="member-avatar" style="background: #667eea">{{ user_initials }}</div>
+                                                <span class="member-name">{{ username }}</span>
+                                            </div>
+                                            <div class="member-stats">
+                                                <span class="tasks-completed">{{ user_stats.completed_tasks }} completadas</span>
+                                                <span class="completion-rate">{{ user_stats.completion_rate }}% eficiencia</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Activity -->
+                            <div class="widget recent-activity">
+                                <h3>🔔 Actividad Reciente</h3>
+                                <div class="widget-content" id="recent-activity-list">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="widget quick-actions">
+                                <h3>⚡ Acciones Rápidas</h3>
+                                <div class="widget-content">
+                                    <div class="quick-action-buttons">
+                                        <button class="quick-action-btn" data-action="add-task">
+                                            <span class="action-icon">➕</span>
+                                            <span class="action-text">Nueva Tarea</span>
+                                        </button>
+                                        <button class="quick-action-btn" data-action="add-project">
+                                            <span class="action-icon">📁</span>
+                                            <span class="action-text">Nuevo Proyecto</span>
+                                        </button>
+                                        <button class="quick-action-btn" data-action="add-note">
+                                            <span class="action-icon">📝</span>
+                                            <span class="action-text">Nueva Nota</span>
+                                        </button>
+                                        <button class="quick-action-btn" data-action="export">
+                                            <span class="action-icon">📊</span>
+                                            <span class="action-text">Exportar</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% else %}
             <div class="welcome-screen">
@@ -499,14 +725,134 @@
     </div>
 
     <!-- Add Task Modal -->
-    <div id="add-task-modal" class="modal">
+    <div id="add-task-modal" class="modal large-modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Nueva Tarea</h2>
             <form id="add-task-form">
-                <textarea id="task-text" placeholder="Describe tu tarea..." required></textarea>
-                <button type="submit">Agregar Tarea</button>
+                <div class="form-group">
+                    <label>Descripción de la tarea</label>
+                    <textarea id="task-text" placeholder="Describe tu tarea..." required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Asignar a</label>
+                        <select id="task-assigned-to">
+                            <option value="">Sin asignar</option>
+                            <option value="admin">Admin (Administración)</option>
+                            <option value="maria">María (Desarrollo)</option>
+                            <option value="juan">Juan (Soporte)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fecha límite</label>
+                        <input type="date" id="task-due-date">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Etiquetas</label>
+                    <div class="tags-input-container">
+                        <div class="selected-tags" id="selected-tags"></div>
+                        <input type="text" id="tags-input" placeholder="Agregar etiqueta (presiona Enter)">
+                    </div>
+                    <div class="predefined-tags">
+                        <span class="predefined-tag urgent" data-tag="Urgente">Urgente</span>
+                        <span class="predefined-tag bug" data-tag="Bug">Bug</span>
+                        <span class="predefined-tag feature" data-tag="Feature">Feature</span>
+                        <span class="predefined-tag review" data-tag="Revisión">Revisión</span>
+                        <span class="predefined-tag client" data-tag="Cliente">Cliente</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Prioridad</label>
+                    <div class="priority-options">
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="low" checked>
+                            <span class="priority-indicator low">🟢 Baja</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="medium">
+                            <span class="priority-indicator medium">🟡 Media</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="high">
+                            <span class="priority-indicator high">🔴 Alta</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit">Crear Tarea</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Quick Notes Modal -->
+    <div id="add-note-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Nueva Nota Rápida</h2>
+            <form id="add-note-form">
+                <div class="form-group">
+                    <input type="text" id="note-title" placeholder="Título de la nota" required>
+                </div>
+                <div class="form-group">
+                    <textarea id="note-content" placeholder="Contenido de la nota..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Color de la nota</label>
+                    <div class="note-colors">
+                        <div class="note-color-option" data-color="#feca57" style="background: #feca57"></div>
+                        <div class="note-color-option" data-color="#ff6b6b" style="background: #ff6b6b"></div>
+                        <div class="note-color-option" data-color="#48cae4" style="background: #48cae4"></div>
+                        <div class="note-color-option" data-color="#96ceb4" style="background: #96ceb4"></div>
+                        <div class="note-color-option" data-color="#ff9ff3" style="background: #ff9ff3"></div>
+                        <div class="note-color-option selected" data-color="#ffeaa7" style="background: #ffeaa7"></div>
+                    </div>
+                </div>
+                <button type="submit">Crear Nota</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>⚡ Atajos de Teclado</h2>
+            <div class="shortcuts-list">
+                <div class="shortcut-item">
+                    <div class="shortcut-key">N</div>
+                    <div class="shortcut-desc">Nueva tarea</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-key">Ctrl + F</div>
+                    <div class="shortcut-desc">Buscar tareas</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-key">Ctrl + K</div>
+                    <div class="shortcut-desc">Cambiar vista (Kanban/Calendario)</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-key">T</div>
+                    <div class="shortcut-desc">Cambiar tema</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-key">Ctrl + E</div>
+                    <div class="shortcut-desc">Exportar proyecto</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-key">Esc</div>
+                    <div class="shortcut-desc">Cerrar modal/panel</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-key">?</div>
+                    <div class="shortcut-desc">Mostrar atajos</div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -1,0 +1,69 @@
+🔹 Ajustes de Tema (lo que vos pedís)
+
+Tema oscuro por defecto (como decís, es lo que más usa todo el mundo).
+
+Fix: asegurate de que cuando cambie a oscuro, también cambien los textos (que no quede el bug de letras negras sobre fondo negro → mejor usar variables CSS para colores).
+
+Modo automático: que detecte si el sistema operativo está en oscuro o claro y lo aplique.
+
+Tema por proyecto: cada proyecto puede tener su propio esquema de colores. Ej: atención al cliente azul, programación verde, administración gris elegante.
+
+🔹 Roles + Asignación de Tareas
+
+Asignar tarea a miembros específicos: como decís, que el admin cuando crea una tarea pueda poner:
+
+“Asignado a: Juan (Programación)”
+
+Y que si la tarea es de otra categoría (Administración, Soporte), solo muestre miembros de esa área.
+
+Filtros por rol: en el tablero podés ver solo las tareas de tu área (útil si hay 200 cosas y vos solo tenés que ver las tuyas).
+
+Vistas distintas:
+
+Admin: ve todo.
+
+Programador: ve solo proyectos de dev.
+
+Atención: solo tickets de clientes.
+
+🔹 Cosas para que quede pro en la maqueta
+
+Buscador de tareas 🔍
+
+Barra arriba que filtre tareas por título, usuario o estado.
+
+Vista calendario 📅
+
+Además del Kanban, poder ver las tareas en un calendario (aunque sea simulado).
+
+Ejemplo: tareas con fecha → se ven en su día.
+
+Dashboard inicial 📊
+
+Cuando entras al panel, que te muestre:
+
+Tareas pendientes hoy.
+
+Progreso semanal.
+
+Proyectos activos.
+
+Notas rápidas / sticky notes 📝
+
+Una sección donde cada usuario puede dejar mini recordatorios personales dentro del proyecto.
+
+Tags o etiquetas en tareas 🏷️
+
+Ej: “Urgente”, “Bug”, “Revisión”, “Cliente”.
+
+Y que después puedas filtrar por esas etiquetas.
+
+🔹 Extras que suman piola
+
+Atajos de teclado ⚡ (aunque sean fake en la maqueta). Ej: N para nueva tarea, Ctrl+F para buscar.
+
+Mini chat de proyecto 💬 (aunque sea falso): una columna lateral donde el equipo “comenta” cositas.
+
+Exportar a imagen 📸: botón de “Descargar screenshot del tablero” → queda fachero para presentaciones.
+
+Avatares dinámicos: si no subís foto, genera una con iniciales y color random (tipo Discord).
