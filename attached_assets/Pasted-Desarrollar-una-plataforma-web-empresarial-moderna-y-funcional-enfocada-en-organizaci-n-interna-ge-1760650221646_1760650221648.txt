@@ -1,0 +1,202 @@
+Desarrollar una plataforma web empresarial moderna y funcional, enfocada en organización interna, gestión de tareas, casos y rendimiento del personal.
+Debe estar construida con React + TypeScript + TailwindCSS + shadcn/ui, aplicando Clean Architecture y principios SOLID.
+
+🧩 ESTRUCTURA Y PATRONES A RESPETAR
+
+Código limpio y modular:
+
+Dividir componentes según responsabilidad única (SRP).
+
+Evitar lógica repetida; usar hooks y helpers reutilizables.
+
+Usar nombres descriptivos (UserCard, TaskList, useThemeStore, etc.).
+
+Separar capas (UI, lógica, estado, servicios).
+
+Evitar comentarios innecesarios; solo los que aclaren lógica compleja.
+
+Arquitectura sugerida:
+
+src/
+├── components/
+├── features/
+├── hooks/
+├── lib/
+├── pages/
+├── store/
+├── styles/
+├── utils/
+└── App.tsx
+
+
+Gestión de estado: usar Zustand (simple, limpio y eficiente).
+
+Estilo visual: usar TailwindCSS + componentes shadcn/ui.
+
+Diseño: moderno, minimalista, con sombras suaves, bordes redondeados (rounded-2xl), fuentes claras (font-semibold, text-gray-800), y colores de acento con gradientes (from-yellow-400 to-yellow-600 o from-blue-500 to-indigo-600).
+
+🎨 LINEAMIENTOS DE DISEÑO
+
+Tema oscuro y claro funcional, con persistencia en localStorage.
+
+Gradientes visibles, suaves y modernos.
+
+Layout con sidebar fija y topbar con opciones (tema, perfil, notificaciones).
+
+Uso correcto de íconos de Lucide React (Settings, Sun, Moon, Bell, UserCircle, etc.).
+
+Cards con shadow-md o shadow-lg, rounded-2xl, p-4 o p-6.
+
+Interfaz limpia tipo panel administrativo moderno (dashboard).
+
+⚙️ FUNCIONALIDADES EXISTENTES (ya implementadas)
+
+El proyecto ya cuenta con:
+
+Sistema de usuarios con roles (admin, miembro, invitado).
+
+Tablero Kanban funcional con tareas y drag & drop.
+
+Gestión de proyectos múltiples.
+
+Sistema de puntos, logros y recompensas.
+
+Dashboard con estadísticas.
+
+Módulo de capacitaciones.
+
+Chat interno y notificaciones.
+
+Modo oscuro (roto actualmente).
+
+Calendario para tareas.
+
+Roles con permisos.
+
+Ranking y gamificación.
+
+🔧 TAREAS PRINCIPALES A EJECUTAR (PRIORIDAD ALTA → BAJA)
+1️⃣ REPARAR MODO OSCURO/CLARO
+
+Hacer que el tema se guarde en localStorage.
+
+Usar un store global (ej. useThemeStore con Zustand).
+
+Aplicar clases dark: de Tailwind dinámicamente.
+
+Mantener el modo seleccionado tras recargar la página.
+
+Agregar un botón toggle en el header con íconos Sun / Moon.
+
+2️⃣ SISTEMA DE CASOS / ATENCIÓN AL CLIENTE (nuevo módulo)
+
+CRUD completo de casos o reclamos con estos campos:
+
+ID, cliente, descripción, estado, prioridad, responsable, notas internas.
+
+Filtros por estado (abierto, en curso, cerrado).
+
+Asignación de responsable.
+
+Historial de actualizaciones por caso.
+
+Dashboard de métricas (tiempo promedio de resolución, cantidad por mes, satisfacción).
+
+Interfaz tipo card grid o tabla con buscador y filtros.
+
+3️⃣ DASHBOARD DE MÉTRICAS
+
+Panel visual con:
+
+Tareas completadas / pendientes.
+
+Casos resueltos / abiertos.
+
+Usuarios activos.
+
+Gráficos con recharts o chart.js.
+
+Diseño tipo cards estadísticas (bg-gradient-to-r, íconos, números grandes).
+
+4️⃣ CHAT INTERNO MEJORADO
+
+Integrar posibilidad de mencionar usuarios (@usuario).
+
+Permitir envío de archivos (solo frontend simulado).
+
+Mantener los mensajes en localStorage por ahora.
+
+Mostrar mensajes en burbujas con timestamps.
+
+5️⃣ BASE DE DATOS (opcional para fase siguiente)
+
+Implementar persistencia con Supabase o MongoDB (Prisma).
+
+Guardar usuarios, tareas, casos, mensajes y configuraciones.
+
+Estructurar servicios en src/lib/api/.
+
+6️⃣ DETALLES VISUALES Y UX
+
+Agregar animaciones suaves con Framer Motion.
+
+Hover states (hover:scale-105, hover:shadow-lg).
+
+Botones con colores de gradiente y transiciones (transition-all duration-200).
+
+Textos con gradiente tipo:
+
+<h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-600">
+  Coaching
+</h1>
+
+📦 COMPONENTES CLAVE A TENER EN EL PROYECTO
+
+<Sidebar /> → navegación principal (Dashboard, Proyectos, Casos, Usuarios, Configuración).
+
+<Header /> → título, búsqueda, notificaciones, selector de tema, perfil.
+
+<KanbanBoard /> → tablero de tareas.
+
+<CasesBoard /> → módulo de casos.
+
+<StatsDashboard /> → panel de métricas.
+
+<ChatPanel /> → chat interno.
+
+<ThemeToggle /> → switch de modo oscuro/claro.
+
+<AppLayout /> → layout general (sidebar + contenido central).
+
+🧱 NORMAS DE DESARROLLO
+
+Cada componente debe estar en su propia carpeta con su estilo y lógica (/features/<modulo>).
+
+Los hooks globales van en /hooks.
+
+El estado global (Zustand) en /store.
+
+Los helpers y formateadores (formatDate, calculatePoints, etc.) en /utils.
+
+Ningún componente debe tener lógica de negocio pesada.
+
+Usar tipos TypeScript para todas las entidades (User, Task, Case, Project).
+
+🔍 ESTILO DE RESPUESTA ESPERADO DE REPLIT
+
+Cuando genere código:
+
+Debe devolver el archivo completo (no fragmentos sueltos).
+
+Debe mantener la coherencia con el diseño general (dashboard moderno).
+
+Debe explicar brevemente el enfoque (2–3 líneas máximo).
+
+No debe usar librerías innecesarias.
+
+Siempre aplicar Clean Code y coherencia visual.
+
+🪄 PRIMERA ACCIÓN A REALIZAR
+
+Implementar y dejar funcional el modo oscuro/claro persistente con Tailwind, Zustand y localStorage.
+Luego continuar con el módulo de casos (CRM interno).
