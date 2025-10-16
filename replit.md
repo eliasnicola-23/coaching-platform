@@ -155,9 +155,24 @@ All entities are currently stored in Zustand stores with localStorage persistenc
 ## Running the Application
 
 ### Development
+
+**IMPORTANT**: The workflow configuration in `.replit` still points to the old Flask app. You need to update it manually:
+
+1. Open the `.replit` file
+2. Find the `[[workflows.workflow.tasks]]` section for "Start application"
+3. Change this line:
+   ```
+   args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+   ```
+   To:
+   ```
+   args = "npm run dev -- --host 0.0.0.0 --port 5000"
+   ```
+
+Alternatively, run manually:
 ```bash
 npm install
-npm run dev
+npm run dev -- --host 0.0.0.0 --port 5000
 ```
 
 The application will run on `http://localhost:5000` (or port 5000 on Replit).
@@ -176,9 +191,26 @@ npm run preview
 - **Visual Feedback**: Smooth transitions and hover states
 - **Clean Code**: No unnecessary comments, self-documenting code
 
-## Notes
+## Recent Updates (October 16, 2025)
 
-- The application is fully client-side with mock data in Zustand stores
-- All data persists in localStorage for demo purposes
-- Future phases will add backend integration
-- The workflow configuration needs to be updated to run `npm run dev -- --host 0.0.0.0 --port 5000`
+### Completed Features
+- ✅ Full React + TypeScript migration complete
+- ✅ Persistent dark/light theme with Zustand + localStorage
+- ✅ Kanban board with drag & drop using @dnd-kit
+- ✅ Cases/CRM module with complete CRUD operations
+- ✅ Secure chat module with @mention support (XSS vulnerability fixed)
+- ✅ Gamification system with rankings, points, and achievements
+- ✅ Modern gradients and visual polish throughout the UI
+
+### Technical Details
+- No dependencies on Flask or Python backend
+- All state managed via Zustand with localStorage persistence
+- Secure message rendering (no XSS vulnerabilities)
+- Clean Architecture and SOLID principles followed
+- Type-safe TypeScript throughout
+
+### Next Steps
+1. Update `.replit` workflow configuration (see Running the Application section)
+2. Test all features in the browser
+3. Optional: Add backend API integration (future phase)
+4. Optional: Deploy to production when ready
