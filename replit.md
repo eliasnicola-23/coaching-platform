@@ -1,66 +1,184 @@
-# Overview
+# TaskMaster Platform
 
-This is a Flask-based Kanban board application for task management and goal tracking. The system provides a modern, minimalist coaching/productivity tool where users can log in and manage their tasks across three columns: "Por hacer" (To Do), "En curso" (In Progress), and "Finalizado" (Done). Users can create tasks and drag them between columns to track progress, similar to a simplified Trello board. The interface features color-coded columns with interactive visual feedback and modern animations.
+## Overview
 
-# User Preferences
+TaskMaster is a modern enterprise platform built with React + TypeScript + TailwindCSS + shadcn/ui, focused on internal organization, task management, cases/CRM, and team performance tracking. The platform follows Clean Architecture and SOLID principles, featuring a modular structure with persistent dark/light theme, Kanban board, case management system, dashboard with metrics, and gamification features.
 
-- Preferred communication style: Simple, everyday language
-- Design preference: Minimalist and modern interface
-- Visual indicators: Color-coded columns (red for To Do, orange for In Progress, green with checkmarks for Done)
-- Interactive elements: Smooth animations and hover effects
+**Last Updated:** October 16, 2025  
+**Technology Stack:** React 19, TypeScript, TailwindCSS, Zustand, React Router, Vite  
+**Development Server:** Run with `npm run dev -- --host 0.0.0.0 --port 5000`
 
-# System Architecture
+## Architecture
 
-## Frontend Architecture
-- **Template Engine**: Uses Flask's Jinja2 templating with server-side rendering
-- **Typography**: Poppins font family for modern, clean appearance
-- **Layout**: Sidebar navigation with main content area, responsive design
-- **Styling**: Modern CSS with flexbox layout, gradient backgrounds, and smooth animations
-- **Color System**: Visual status indicators - red for "Por hacer", orange for "En curso", green for "Finalizado"  
-- **Interactivity**: Vanilla JavaScript for drag-and-drop functionality, project management, form handling, and AJAX requests
-- **UI Pattern**: Multi-page application with sidebar navigation and project-based organization
-- **Visual Effects**: Hover animations, drag feedback, smooth transitions, and modal interactions
+### Frontend Architecture
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite for fast development and optimized builds
+- **Styling**: TailwindCSS with custom design tokens and dark mode support
+- **State Management**: Zustand with localStorage persistence
+- **Routing**: React Router v6 for client-side navigation
+- **Icons**: Lucide React for consistent iconography
+- **UI Components**: Custom components following shadcn/ui patterns
 
-## Backend Architecture
-- **Framework**: Flask web framework for Python
-- **Session Management**: Flask sessions with server-side storage using secret keys
-- **Authentication**: Simple username/password validation against in-memory user store
-- **Project Management**: Multi-project support with project creation, selection, and navigation
-- **Data Storage**: In-memory dictionaries for user credentials, projects, and tasks
-- **API Design**: RESTful endpoints for login, project management, and task operations
+### Directory Structure
 
-## Data Storage
-- **User Database**: Simple list of dictionaries containing username/password pairs
-- **Project Storage**: Nested dictionary structure organized by username containing project lists
-- **Task Storage**: Three-level nested structure: username → project_id → task columns (todo/inprogress/done)
-- **Session Storage**: Flask's built-in session management for maintaining user and current project state
-- **Current Project Tracking**: Per-user tracking of currently selected project
-- **Data Persistence**: Currently uses in-memory storage (data lost on restart)
+```
+src/
+├── components/       # Shared UI components (Sidebar, Header, ThemeToggle, AppLayout)
+├── features/        # Feature-specific modules (planned for future expansion)
+├── hooks/           # Custom React hooks (planned)
+├── lib/             # Utilities and helpers (cn function for class merging)
+├── pages/           # Page components (Dashboard, Tasks, Cases, Users, Rankings, Settings)
+├── store/           # Zustand stores (theme, user, project, task, case)
+├── styles/          # Global styles and Tailwind configuration
+├── types/           # TypeScript type definitions
+├── utils/           # Helper functions (planned)
+└── App.tsx          # Main application component with routing
+```
 
-## Authentication & Authorization
-- **Login System**: Form-based authentication with POST requests
-- **Session Management**: Username stored in Flask session after successful login
-- **Access Control**: Route protection based on session presence
-- **User Isolation**: Tasks are separated by username to ensure data privacy
+### State Management
 
-# External Dependencies
+The application uses Zustand for global state management with the following stores:
 
-## Core Framework Dependencies
-- **Flask**: Web framework for Python applications
-- **Jinja2**: Template engine (included with Flask)
-- **Werkzeug**: WSGI utilities (included with Flask)
+1. **themeStore** - Dark/light theme with localStorage persistence
+2. **userStore** - Current user, authentication, points, and achievements
+3. **projectStore** - Project management and current project selection
+4. **taskStore** - Task CRUD operations and Kanban board state
+5. **caseStore** - Case/CRM management with status tracking
 
-## Frontend Libraries
-- **Vanilla JavaScript**: No external JavaScript libraries required
-- **CSS3**: Modern CSS features including flexbox and drag-and-drop styling
-- **HTML5**: Drag and drop API for task movement functionality
+### Design System
 
-## Environment Configuration
-- **Environment Variables**: Uses SESSION_SECRET for production security
-- **Development Server**: Flask's built-in development server
-- **Static File Serving**: Flask's static file handling for CSS and JavaScript
+- **Theme**: Dark mode by default, toggleable light mode
+- **Colors**: CSS custom properties for theme-aware colors
+- **Typography**: Inter font family with consistent sizing
+- **Gradients**: Modern gradient styling (yellow-400 to yellow-600, blue-500 to indigo-600, etc.)
+- **Borders**: Rounded corners (rounded-2xl) for cards and containers
+- **Shadows**: Subtle elevation with shadow-md and shadow-lg
+- **Spacing**: Consistent padding (p-4, p-6) and gaps
 
-## Potential Future Dependencies
-- **Database**: Currently designed for easy migration to SQLite, PostgreSQL, or MySQL
-- **Authentication**: Structure supports integration with Flask-Login or similar libraries
-- **API Framework**: Architecture ready for Flask-RESTful or similar API extensions
+## Features
+
+### Implemented Features
+
+1. **Dark/Light Theme System**
+   - Persistent theme selection using localStorage
+   - Zustand store for global theme management
+   - CSS custom properties for theme-aware styling
+   - Theme toggle button in header
+
+2. **Dashboard**
+   - Statistics cards with gradients
+   - Completed tasks, active tasks, open cases metrics
+   - Recent activity feed
+   - Progress indicators
+
+3. **Kanban Board (Tasks)**
+   - Three-column layout (Por Hacer, En Curso, Finalizado)
+   - Task creation with inline forms
+   - Task movement between columns
+   - Task filtering and search (planned)
+   - Priority indicators and tags
+
+4. **Cases/CRM Module**
+   - Complete CRUD operations
+   - Case status (abierto, en_curso, cerrado)
+   - Priority levels (baja, media, alta, urgente)
+   - Filtering by status
+   - Case history tracking (historial)
+   - Responsible assignment
+
+5. **Layout & Navigation**
+   - Fixed sidebar with project and user information
+   - Top header with search and notifications
+   - Responsive design
+   - React Router navigation
+
+6. **User Management**
+   - User profiles with roles (admin, miembro, invitado)
+   - Points and leveling system
+   - Achievements tracking
+   - User initials avatars with gradient backgrounds
+
+7. **Project Management**
+   - Multiple project support
+   - Project selection and switching
+   - Project-specific tasks and data
+
+### Planned Features
+
+- Enhanced chat module with @mentions
+- File attachments for messages and cases
+- Advanced analytics and charts with Recharts
+- User rankings and leaderboards
+- Settings panel for customization
+- Real-time collaboration features
+- Backend API integration (future phase)
+
+## Data Model
+
+### Core Entities
+
+- **User**: id, username, email, role, points, level, achievements
+- **Project**: id, name, description, color, createdBy, createdAt
+- **Task**: id, text, status, projectId, createdBy, assignedTo, priority, tags, dueDate
+- **Case**: id, cliente, descripcion, estado, prioridad, responsable, notasInternas, historial
+- **Message**: id, author, text, timestamp, projectId, mentions, attachments
+
+All entities are currently stored in Zustand stores with localStorage persistence. Future phases will integrate a backend API (Supabase or custom REST API).
+
+## Development Guidelines
+
+### Code Style
+- Use TypeScript for all new code
+- Follow SOLID principles and Single Responsibility Principle
+- Use type-only imports for TypeScript types (`import type { }`)
+- Use meaningful component and variable names
+- Keep components focused and modular
+
+### Component Structure
+- Place shared components in `src/components/`
+- Place page components in `src/pages/`
+- Use feature folders for complex modules (planned)
+- Export components using named exports
+
+### State Management
+- Use Zustand stores for global state
+- Persist important data to localStorage
+- Keep store logic simple and focused
+- Use selectors for derived state (when needed)
+
+### Styling
+- Use Tailwind utility classes
+- Follow the design system color palette
+- Use the `cn()` utility for conditional classes
+- Maintain consistent spacing and sizing
+
+## Running the Application
+
+### Development
+```bash
+npm install
+npm run dev
+```
+
+The application will run on `http://localhost:5000` (or port 5000 on Replit).
+
+### Building for Production
+```bash
+npm run build
+npm run preview
+```
+
+## User Preferences
+
+- **Language**: Spanish (ES) for UI text
+- **Design**: Modern, minimalist with gradients and rounded corners
+- **Theme**: Dark mode by default
+- **Visual Feedback**: Smooth transitions and hover states
+- **Clean Code**: No unnecessary comments, self-documenting code
+
+## Notes
+
+- The application is fully client-side with mock data in Zustand stores
+- All data persists in localStorage for demo purposes
+- Future phases will add backend integration
+- The workflow configuration needs to be updated to run `npm run dev -- --host 0.0.0.0 --port 5000`
