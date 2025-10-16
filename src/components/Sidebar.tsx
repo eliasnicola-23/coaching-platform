@@ -6,6 +6,7 @@ import {
   Users,
   Settings,
   Trophy,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useUserStore } from '../store/userStore';
@@ -15,8 +16,9 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Tareas', href: '/tasks', icon: KanbanSquare },
   { name: 'Casos', href: '/cases', icon: Briefcase },
-  { name: 'Usuarios', href: '/users', icon: Users },
+  { name: 'Chat', href: '/chat', icon: MessageSquare },
   { name: 'Rankings', href: '/rankings', icon: Trophy },
+  { name: 'Usuarios', href: '/users', icon: Users },
   { name: 'Configuración', href: '/settings', icon: Settings },
 ];
 
