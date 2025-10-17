@@ -31,7 +31,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
       <div className="p-6 border-b border-border">
         <h1 className="text-3xl font-extrabold gradient-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-          TaskMaster
+          CoachingPlatform
         </h1>
       </div>
 
